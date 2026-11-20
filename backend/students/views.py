@@ -1,33 +1,41 @@
+
 from django.shortcuts import render, redirect
-from .forms import StudentForm
-from .models import Student
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 
 
-def student_form(request):
+def student_login(request):
 
-    if request.method == 'POST':
-        form = StudentForm(request.POST)
+    error = None
 
-        if form.is_valid():
-            form.save()
-            return redirect('student_list')
+    if request.method == "POST":
 
-    else:
-        form = StudentForm()
+        username = request.POST.get('username')
+        password = request.POST.get('password')
 
-    return render(
-        request,
-        'students/student_forms.html',
-        {'form': form}
-    )
+        user = authenticate(
+            request,
+            username=username,
+            password=password
+        )
+
+        if user is not None:
+            login(request, user)
+            return redirect('dashboard')
+
+        else:
+            error = "Invalid username or password"
+
+    return render(request, 'Students/login.html', {
+        'error': error
+    })
 
 
-def student_list(request):
+@login_required
+def dashboard(request):
+    return render(request, 'Students/dashboard.html')
 
-    students = Student.objects.all()
 
-    return render(
-        request,
-        'students/student_list.html',
-        {'students': students}
-    )
+def student_logout(request):
+    logout(request)
+    return redirect('login')
